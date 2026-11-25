@@ -49,6 +49,17 @@ a { color: inherit; text-decoration: none; }
 .btn-sm { min-height: 31px; padding: 6px 9px; font-size: 12px; }
 .btn-block { width: 100%; min-height: 46px; }
 .login-note { margin-top: 20px; padding: 12px; border-radius: 9px; color: #586980; background: #f4f7fb; font-size: 12px; line-height: 1.5; }
+.quick-login { margin-top: 22px; }
+.quick-login-heading { margin-bottom: 10px; color: #344563; font-size: 12px; font-weight: 800; }
+.quick-login-grid { display: grid; gap: 8px; }
+.quick-login-option { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 11px 12px; border: 1px solid #e0e6ef; border-radius: 9px; color: var(--ink); background: white; text-align: left; }
+.quick-login-option:hover:not(:disabled) { border-color: #9dbbff; background: #f8faff; }
+.quick-login-option:disabled { cursor: wait; opacity: .65; }
+.quick-login-label { font-size: 12px; font-weight: 800; }
+.quick-login-description { color: var(--muted); font-size: 10px; }
+.quick-login-role { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--blue); font-size: 10px; font-weight: 800; }
+.quick-login .login-note { margin-top: 10px; }
+.quick-login code { font-size: 11px; }
 .shell { display: grid; min-height: 100vh; grid-template-columns: 252px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; overflow: hidden; padding: 22px 14px; border-right: 1px solid var(--line); background: white; }
 .sidebar .brand { margin: 1px 9px 28px; font-size: 17px; }

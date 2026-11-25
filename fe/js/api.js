@@ -6,14 +6,6 @@ export function getApiBase() {
   return (localStorage.getItem(API_BASE_KEY) || "http://localhost:8000/api/v1").replace(/\/+$/, "");
 }
 
-export function setApiBase(value) {
-  const clean = value.trim().replace(/\/+$/, "");
-  if (!/^https?:\/\/[^/]+(?:\/.*)?$/i.test(clean)) {
-    throw new Error("Địa chỉ API phải là URL http(s) hợp lệ.");
-  }
-  localStorage.setItem(API_BASE_KEY, clean);
-}
-
 export function getAccessToken() { return sessionStorage.getItem(ACCESS_KEY); }
 export function saveTokens(tokens) {
   sessionStorage.setItem(ACCESS_KEY, tokens.access_token);
@@ -35,7 +27,7 @@ async function request(path, options = {}, retry = true) {
   try {
     response = await fetch(`${getApiBase()}${path}`, { ...options, headers });
   } catch {
-    throw new Error(`Không thể kết nối API (${getApiBase()}). Kiểm tra Backend và CORS.`);
+    throw new Error("Không thể kết nối máy chủ. Kiểm tra Backend và cấu hình CORS.");
   }
   if (response.status === 401 && retry && sessionStorage.getItem(REFRESH_KEY)) {
     const form = new URLSearchParams({ refresh_token: sessionStorage.getItem(REFRESH_KEY) });
@@ -81,7 +73,7 @@ export const api = {
         body: form,
       });
     } catch {
-      throw new Error(`Không thể kết nối API (${getApiBase()}). Kiểm tra Backend và CORS.`);
+      throw new Error("Không thể kết nối máy chủ. Kiểm tra Backend và cấu hình CORS.");
     }
     if (!response.ok) {
       let detail = "Đăng nhập thất bại.";
@@ -89,14 +81,6 @@ export const api = {
       throw new Error(detail);
     }
     saveTokens(await response.json());
-    return api.get("/auth/me");
-  },
-  oidc: async (idToken, nonce) => {
-    const tokens = await request("/auth/oidc", {
-      method: "POST",
-      body: JSON.stringify({ id_token: idToken, nonce }),
-    }, false);
-    saveTokens(tokens);
     return api.get("/auth/me");
   },
   logout: clearTokens,

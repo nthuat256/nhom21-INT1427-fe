@@ -1,30 +1,25 @@
-import { api, getAccessToken, getApiBase, setApiBase } from "./api.js";
+import { api, getAccessToken } from "./api.js";
 import { createQrSvg } from "./utils/qr.js";
 
 const root = document.querySelector("#app");
 const modalRoot = document.querySelector("#modal-root");
 const toastRoot = document.querySelector("#toast-root");
 const state = { user: null, route: "dashboard", page: 1, q: "", status: "", menuOpen: false, lastRows: [] };
-const OIDC_ISSUER_KEY = "labequip_oidc_issuer";
-const OIDC_CLIENT_KEY = "labequip_oidc_client_id";
-const OIDC_STATE_KEY = "labequip_oidc_state";
-const OIDC_NONCE_KEY = "labequip_oidc_nonce";
-const OIDC_VERIFIER_KEY = "labequip_oidc_verifier";
 
 const titles = {
   dashboard: "Tổng quan", rooms: "Phòng thực hành", schedules: "Lịch học",
   devices: "Thiết bị", loans: "Phiếu mượn", "request-loan": "Đăng ký mượn",
   maintenance: "Bảo trì thiết bị", notifications: "Thông báo", users: "Người dùng",
-  categories: "Danh mục thiết bị", audit: "Audit logs", settings: "Cài đặt",
+  categories: "Danh mục thiết bị", settings: "Cài đặt",
 };
 const icons = {
   dashboard: "▦", rooms: "⌂", schedules: "▤", devices: "▣", loans: "⇄",
   "request-loan": "+", maintenance: "⚙", notifications: "♧", users: "♙",
-  categories: "▧", audit: "◷", settings: "⚙",
+  categories: "▧", settings: "⚙",
 };
 const navByRole = {
   BORROWER: ["dashboard", "rooms", "schedules", "devices", "request-loan", "loans", "notifications"],
-  ADMIN: ["dashboard", "users", "rooms", "categories", "devices", "schedules", "loans", "maintenance", "notifications", "audit", "settings"],
+  ADMIN: ["dashboard", "users", "rooms", "categories", "devices", "schedules", "loans", "maintenance", "notifications", "settings"],
   TECHNICIAN: ["dashboard", "maintenance", "notifications"],
 };
 const entityConfig = {
@@ -69,7 +64,11 @@ const entityConfig = {
   },
 };
 
-const roleVi = { ADMIN: "Quản trị viên", BORROWER: "Sinh viên / Giảng viên", TECHNICIAN: "Kỹ thuật viên" };
+const roleVi = {
+  ADMIN: "Nhà trường · Quản trị",
+  BORROWER: "Người dùng · Sinh viên / Giảng viên",
+  TECHNICIAN: "Người vận hành · Kỹ thuật viên",
+};
 const statusVi = {
   PENDING: "Chờ duyệt", APPROVED: "Đã duyệt", REJECTED: "Từ chối", CHECKED_OUT: "Đang mượn",
   RETURNED: "Đã trả", OVERDUE: "Quá hạn", CANCELLED: "Đã hủy", AVAILABLE: "Sẵn sàng",
@@ -100,7 +99,11 @@ function toast(message, error = false) {
   setTimeout(() => item.remove(), 4200);
 }
 function showLogin(error = "") {
-  const base = esc(getApiBase());
+  const demoAccounts = [
+    ["BORROWER", "Người dùng", "Trần Văn Bình · Sinh viên", "tran.van.binh@university.edu", "LabEquip123!"],
+    ["ADMIN", "Nhà trường", "Nguyễn Thị Lan · Cán bộ nhà trường", "nguyen.thi.lan@university.edu", "LabEquip123!"],
+    ["TECHNICIAN", "Người vận hành", "Lê Quốc Huy · Kỹ thuật viên thiết bị", "le.quoc.huy@university.edu", "LabEquip123!"],
+  ];
   root.innerHTML = `
     <section class="login-screen">
       <div class="login-art">
@@ -117,16 +120,57 @@ function showLogin(error = "") {
           ${error ? `<div class="login-note" style="color:#b42318;background:#fff2f0">${esc(error)}</div>` : ""}
           <div class="field"><label for="login-email">Email tài khoản</label><input id="login-email" name="email" type="email" autocomplete="username" required placeholder="ten@university.edu"></div>
           <div class="field"><label for="login-password">Mật khẩu</label><input id="login-password" name="password" type="password" autocomplete="current-password" required></div>
-          <div class="field"><label for="api-url">Địa chỉ API</label><input id="api-url" name="api_base" type="url" required value="${base}"></div>
           <button class="btn btn-primary btn-block" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
-          <button class="btn btn-outline btn-block" style="margin-top:9px" type="button" data-action="oidc-login">Đăng nhập SSO / OIDC</button>
-          <div class="login-note">Backend hiện xác thực bằng email và mật khẩu. Có thể đăng nhập SSO bằng OIDC nếu Identity Provider và Backend đã được cấu hình.</div>
+          <button class="btn btn-outline btn-block" style="margin-top:9px" type="button" data-action="show-register">Tạo tài khoản người dùng</button>
+          <div class="quick-login">
+            <div class="quick-login-heading">Hoặc trải nghiệm nhanh theo vai trò</div>
+            <div class="quick-login-grid">${demoAccounts.map(([role, label, description, email, password]) => `
+              <button class="quick-login-option" type="button" data-action="fill-demo-login" data-email="${email}" data-password="${password}" aria-label="Điền tài khoản mẫu vai trò ${label}">
+                <span class="quick-login-label">${label}</span>
+                <span class="quick-login-description">${description}</span>
+                <span class="quick-login-role">${role}</span>
+              </button>`).join("")}</div>
+            <div class="login-note">Tài khoản demo cần được tạo trước bằng lệnh <code>python -m api.cli seed-demo</code>.</div>
+          </div>
+          <div class="login-note">Đăng nhập bằng email và mật khẩu của tài khoản đã được tạo.</div>
+        </form>
+      </div>
+    </section>`;
+}
+
+function showRegister() {
+  root.innerHTML = `
+    <section class="login-screen">
+      <div class="login-art">
+        <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
+        <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
+          <h1>Tạo tài khoản<br>người dùng.</h1>
+          <p>Đăng ký để tra cứu thiết bị và gửi yêu cầu mượn tại phòng thực hành.</p></div>
+        <div class="login-art-foot">Tài khoản đăng ký mới được cấp quyền Người dùng.</div>
+      </div>
+      <div class="login-panel">
+        <form class="login-card" id="register-form">
+          <div class="eyebrow">ĐĂNG KÝ TÀI KHOẢN</div><h2>Tạo tài khoản</h2>
+          <p>Tài khoản mới chỉ có quyền Người dùng (BORROWER).</p>
+          <div class="field"><label for="register-name">Họ và tên</label><input id="register-name" name="full_name" autocomplete="name" required minlength="2" maxlength="160"></div>
+          <div class="field"><label for="register-email">Email</label><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="ten@university.edu"></div>
+          <div class="field"><label for="register-id">Mã sinh viên / giảng viên (không bắt buộc)</label><input id="register-id" name="student_or_staff_id" maxlength="64"></div>
+          <div class="field"><label for="register-password">Mật khẩu (ít nhất 10 ký tự)</label><input id="register-password" name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div>
+          <div class="field"><label for="register-password-confirm">Nhập lại mật khẩu</label><input id="register-password-confirm" name="password_confirm" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div>
+          <button class="btn btn-primary btn-block" type="submit">Tạo tài khoản</button>
+          <button class="btn btn-outline btn-block" style="margin-top:9px" type="button" data-action="show-login">Quay lại đăng nhập</button>
         </form>
       </div>
     </section>`;
 }
 
 function allowed(route) { return (navByRole[state.user?.role] || []).includes(route); }
+async function signIn(email, password) {
+  state.user = await api.login(email, password);
+  state.route = "dashboard";
+  location.hash = "#dashboard";
+  await loadRoute();
+}
 function renderShell() {
   const nav = navByRole[state.user.role] || [];
   root.innerHTML = `
@@ -183,7 +227,6 @@ async function renderPage() {
     if (state.route === "request-loan") return await renderRequestLoan(container);
     if (state.route === "maintenance") return await renderMaintenance(container);
     if (state.route === "loans") return await renderLoans(container);
-    if (state.route === "audit") return await renderAudit(container);
     if (state.route === "settings") return await renderSettings(container);
     if (entityConfig[state.route]) return await renderEntity(container, state.route);
     container.innerHTML = errorBlock("Không tìm thấy trang yêu cầu.");
@@ -288,9 +331,7 @@ function tableHTML(key, items) {
     ? [["id", "Mã phiếu"], ["room_id", "Phòng"], ["starts_at", "Thời gian mượn"], ["due_at", "Hạn trả"], ["details", "Số dòng thiết bị"], ["status", "Trạng thái"]]
     : key === "maintenance"
       ? [["device_id", "Mã thiết bị"], ["description", "Mô tả lỗi"], ["status", "Trạng thái"], ["technician_id", "Kỹ thuật viên"], ["created_at", "Ngày báo"]]
-      : key === "audit"
-        ? [["action", "Hành động"], ["entity_type", "Loại dữ liệu"], ["entity_id", "Mã liên quan"], ["actor_id", "Người thực hiện"], ["created_at", "Thời gian"]]
-        : entityConfig[key].columns;
+      : entityConfig[key].columns;
   const rows = items.map((item) => `<tr>${columns.map(([field]) => `<td>${cellValue(field, item[field], item)}</td>`).join("")}<td>${rowActions(key, item)}</td></tr>`).join("");
   return `<div class="table-wrap"><table><thead><tr>${columns.map(([, label]) => `<th>${esc(label)}</th>`).join("")}<th>Thao tác</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
@@ -357,13 +398,6 @@ async function renderMaintenance(container) {
   const add = state.user.role === "ADMIN" ? `<button class="btn btn-primary" data-action="report-damage">+ Báo thiết bị hỏng</button>` : "";
   container.innerHTML = heading("Bảo trì thiết bị", "Ghi nhận sự cố và theo dõi toàn bộ quy trình sửa chữa.", add)
     + `<section class="table-panel"><div class="toolbar">${filters}</div>${tableHTML("maintenance", result.items || [])}${paginationHTML(result)}</section>`;
-}
-
-async function renderAudit(container) {
-  const result = await api.get(`/audit-logs?${queryString({ page: state.page, page_size: 20 })}`);
-  state.lastRows = result.items || [];
-  container.innerHTML = heading("Audit logs", "Nhật ký hoạt động được lưu từ backend, chỉ đọc.")
-    + `<section class="table-panel"><div class="toolbar"><span class="muted">Lịch sử hệ thống</span><span class="toolbar-spacer"></span><span class="muted">${esc(result.total ?? 0)} bản ghi</span></div>${tableHTML("audit", result.items || [])}${paginationHTML(result)}</section>`;
 }
 
 async function renderNotifications(container) {
@@ -452,118 +486,6 @@ function showModal(title, body, footer = `<button class="btn btn-outline" data-a
 }
 function closeModal() { modalRoot.innerHTML = ""; }
 
-function clearOidcTransaction() {
-  sessionStorage.removeItem(OIDC_STATE_KEY);
-  sessionStorage.removeItem(OIDC_NONCE_KEY);
-  sessionStorage.removeItem(OIDC_VERIFIER_KEY);
-}
-function randomUrlSafe(bytes = 32) {
-  const value = crypto.getRandomValues(new Uint8Array(bytes));
-  return btoa(String.fromCharCode(...value)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-function oidcConfig() {
-  return {
-    issuer: (localStorage.getItem(OIDC_ISSUER_KEY) || "").replace(/\/+$/, ""),
-    clientId: localStorage.getItem(OIDC_CLIENT_KEY) || "",
-  };
-}
-async function oidcMetadata(issuer) {
-  let response;
-  try {
-    response = await fetch(`${issuer}/.well-known/openid-configuration`, { credentials: "omit" });
-  } catch {
-    throw new Error("Không tải được OIDC discovery document. Kiểm tra issuer và CORS của Identity Provider.");
-  }
-  if (!response.ok) throw new Error(`OIDC discovery trả về HTTP ${response.status}.`);
-  const metadata = await response.json();
-  if (String(metadata.issuer || "").replace(/\/+$/, "") !== issuer) {
-    throw new Error("Issuer trong discovery document không khớp cấu hình.");
-  }
-  if (!metadata.authorization_endpoint || !metadata.token_endpoint) {
-    throw new Error("OIDC discovery thiếu authorization_endpoint hoặc token_endpoint.");
-  }
-  return metadata;
-}
-async function startOidc() {
-  const { issuer, clientId } = oidcConfig();
-  if (!issuer || !clientId) {
-    showOidcConfig();
-    return;
-  }
-  const metadata = await oidcMetadata(issuer);
-  const verifier = randomUrlSafe(48);
-  const nonce = randomUrlSafe(32);
-  const stateToken = randomUrlSafe(32);
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  sessionStorage.setItem(OIDC_STATE_KEY, stateToken);
-  sessionStorage.setItem(OIDC_NONCE_KEY, nonce);
-  sessionStorage.setItem(OIDC_VERIFIER_KEY, verifier);
-  const redirectUri = `${location.origin}${location.pathname}`;
-  const params = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: "openid email profile",
-    state: stateToken,
-    nonce,
-    code_challenge: challenge,
-    code_challenge_method: "S256",
-  });
-  location.assign(`${metadata.authorization_endpoint}?${params}`);
-}
-function showOidcConfig() {
-  const { issuer, clientId } = oidcConfig();
-  const body = `<form id="oidc-config-form"><div class="field"><label for="oidc-issuer">OIDC issuer</label><input id="oidc-issuer" name="issuer" type="url" required placeholder="https://login.university.edu" value="${esc(issuer)}"></div><div class="field"><label for="oidc-client">Client ID (public client)</label><input id="oidc-client" name="client_id" required value="${esc(clientId)}"></div><p class="muted">Redirect URI cần đăng ký ở Identity Provider: <code>${esc(`${location.origin}${location.pathname}`)}</code>. Issuer và Client ID phải khớp cấu hình OIDC phía Backend.</p></form>`;
-  showModal("Cấu hình đăng nhập SSO", body, `<button class="btn btn-outline" data-action="close-modal">Hủy</button><button class="btn btn-primary" type="submit" form="oidc-config-form">Lưu và tiếp tục</button>`);
-}
-async function finishOidcCallback() {
-  const params = new URLSearchParams(location.search);
-  if (!params.has("code") && !params.has("error")) return null;
-  const code = params.get("code");
-  const returnedState = params.get("state");
-  const expectedState = sessionStorage.getItem(OIDC_STATE_KEY);
-  const nonce = sessionStorage.getItem(OIDC_NONCE_KEY);
-  const verifier = sessionStorage.getItem(OIDC_VERIFIER_KEY);
-  const { issuer, clientId } = oidcConfig();
-  history.replaceState(null, "", `${location.pathname}${location.hash}`);
-  try {
-    if (!expectedState || returnedState !== expectedState) {
-      throw new Error("Giao dịch OIDC không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
-    }
-    if (params.has("error")) throw new Error(params.get("error_description") || `Đăng nhập OIDC bị từ chối (${params.get("error")}).`);
-    if (!nonce || !verifier || !issuer || !clientId) {
-      throw new Error("Giao dịch OIDC không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
-    }
-    if (!code) throw new Error("Identity Provider không trả authorization code.");
-    const metadata = await oidcMetadata(issuer);
-    const form = new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: `${location.origin}${location.pathname}`,
-      client_id: clientId,
-      code_verifier: verifier,
-    });
-    let response;
-    try {
-      response = await fetch(metadata.token_endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: form,
-        credentials: "omit",
-      });
-    } catch {
-      throw new Error("Không đổi được authorization code. Kiểm tra token endpoint và CORS của Identity Provider.");
-    }
-    if (!response.ok) throw new Error(`OIDC token endpoint trả về HTTP ${response.status}.`);
-    const tokens = await response.json();
-    if (!tokens.id_token) throw new Error("OIDC token endpoint không trả id_token.");
-    return await api.oidc(tokens.id_token, nonce);
-  } finally {
-    clearOidcTransaction();
-  }
-}
 function detailBody(record, exclude = []) {
   return `<div class="details-grid">${Object.entries(record).filter(([key]) => !exclude.includes(key) && key !== "details").map(([key, value]) => `<div class="detail-item"><div class="detail-label">${esc(key.replaceAll("_", " "))}</div><div class="detail-value">${key === "status" ? statusBadge(value) : esc(value && typeof value === "object" ? JSON.stringify(value) : (key.endsWith("_at") ? fmtDate(value) : (value ?? "—")))}</div></div>`).join("")}</div>`;
 }
@@ -657,23 +579,22 @@ async function handleSubmit(event) {
   try {
     if (form.id === "login-form") {
       const data = new FormData(form);
-      setApiBase(data.get("api_base"));
-      state.user = await api.login(data.get("email"), data.get("password"));
-      state.route = "dashboard";
-      location.hash = "#dashboard";
-      await loadRoute();
+      await signIn(data.get("email"), data.get("password"));
       return;
     }
-    if (form.id === "oidc-config-form") {
+    if (form.id === "register-form") {
       const data = new FormData(form);
-      let issuerUrl;
-      try { issuerUrl = new URL(data.get("issuer")); } catch { throw new Error("OIDC issuer phải là URL hợp lệ."); }
-      const localHttpIssuer = issuerUrl.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(issuerUrl.hostname);
-      if (issuerUrl.protocol !== "https:" && !localHttpIssuer) throw new Error("OIDC issuer phải dùng HTTPS (HTTP chỉ được phép trên localhost).");
-      localStorage.setItem(OIDC_ISSUER_KEY, issuerUrl.toString().replace(/\/+$/, ""));
-      localStorage.setItem(OIDC_CLIENT_KEY, String(data.get("client_id")).trim());
-      closeModal();
-      await startOidc();
+      const password = data.get("password");
+      if (password !== data.get("password_confirm")) throw new Error("Mật khẩu nhập lại không khớp.");
+      const account = {
+        full_name: data.get("full_name"),
+        email: data.get("email"),
+        password,
+        student_or_staff_id: data.get("student_or_staff_id") || null,
+      };
+      await api.post("/auth/register", account);
+      toast("Tạo tài khoản thành công. Đang đăng nhập...");
+      await signIn(account.email, account.password);
       return;
     }
     if (form.id === "entity-form") {
@@ -744,6 +665,14 @@ async function handleSubmit(event) {
 async function handleAction(button) {
   const { action, id, key } = button.dataset;
   try {
+    if (action === "show-register") { showRegister(); return; }
+    if (action === "show-login") { showLogin(); return; }
+    if (action === "fill-demo-login") {
+      document.querySelector("#login-email").value = button.dataset.email;
+      document.querySelector("#login-password").value = button.dataset.password;
+      document.querySelector("#login-email").focus();
+      return;
+    }
     if (action === "logout") { api.logout(); state.user = null; showLogin(); return; }
     if (action === "toggle-menu") {
       state.menuOpen = !state.menuOpen;
@@ -793,10 +722,6 @@ async function handleAction(button) {
       if (!window.confirm(`Xóa cấu hình "${button.dataset.key}"?`)) return;
       await api.delete(`/settings/${encodeURIComponent(button.dataset.key)}`); toast("Đã xóa cấu hình."); await renderPage(); return;
     }
-    if (action === "oidc-login") {
-      await startOidc();
-      return;
-    }
   } catch (error) { toast(error.message, true); }
 }
 
@@ -835,19 +760,6 @@ window.addEventListener("hashchange", loadRoute);
 window.addEventListener("auth:expired", () => { state.user = null; showLogin("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."); });
 
 async function boot() {
-  try {
-    const oidcUser = await finishOidcCallback();
-    if (oidcUser) {
-      state.user = oidcUser;
-      location.hash = "#dashboard";
-      await loadRoute();
-      return;
-    }
-  } catch (error) {
-    api.logout();
-    showLogin(error.message);
-    return;
-  }
   if (!getAccessToken()) return showLogin();
   try {
     state.user = await api.get("/auth/me");
