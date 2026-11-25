@@ -11,6 +11,7 @@ fe/
   js/
     app.js             SPA, màn hình, biểu mẫu và luồng theo vai trò
     api.js             Fetch client, Bearer JWT, refresh và xử lý lỗi
+    icons.js           Bộ icon SVG inline dùng chung cho giao diện
     utils/qr.js        Tạo QR cục bộ cho mã định danh tài sản
 ```
 

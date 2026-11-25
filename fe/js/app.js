@@ -1,4 +1,5 @@
 import { api, getAccessToken } from "./api.js";
+import { icon } from "./icons.js";
 import { createQrSvg } from "./utils/qr.js";
 
 const root = document.querySelector("#app");
@@ -13,9 +14,9 @@ const titles = {
   categories: "Danh mục thiết bị", settings: "Cài đặt",
 };
 const icons = {
-  dashboard: "▦", rooms: "⌂", schedules: "▤", devices: "▣", loans: "⇄",
-  "request-loan": "+", maintenance: "⚙", notifications: "♧", users: "♙",
-  categories: "▧", settings: "⚙",
+  dashboard: "dashboard", rooms: "building", schedules: "calendar", devices: "package", loans: "exchange",
+  "request-loan": "plus", maintenance: "wrench", notifications: "bell", users: "users",
+  categories: "layers", settings: "settings",
 };
 const navByRole = {
   BORROWER: ["dashboard", "rooms", "schedules", "devices", "request-loan", "loans", "notifications"],
@@ -112,7 +113,7 @@ function showLogin(error = "") {
     <section class="login-screen">
       <div class="login-art">
         <div class="login-art-main">
-          <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
+          <div class="brand"><span class="brand-mark">${icon("flask")}</span><span>LabEquip</span></div>
           <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
             <h1>Thiết bị tốt.<br>Thực hành tốt.</h1>
             <p>Quản lý mượn, trả và bảo trì thiết bị phòng thực hành .</p></div>
@@ -124,7 +125,7 @@ function showLogin(error = "") {
           ${error ? `<div class="login-note" style="color:#b42318;background:#fff2f0">${esc(error)}</div>` : ""}
           <div class="field"><label for="login-email">Email tài khoản</label><input id="login-email" name="email" type="email" autocomplete="username" required placeholder="ten@university.edu"></div>
           <div class="field"><label for="login-password">Mật khẩu</label><input id="login-password" name="password" type="password" autocomplete="current-password" required></div>
-          <button class="btn btn-primary btn-block" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
+          <button class="btn btn-primary btn-block" type="submit">Đăng nhập ${icon("arrowRight")}</button>
           <button class="btn btn-outline btn-block" style="margin-top:9px" type="button" data-action="show-register">Tạo tài khoản người dùng</button>
           <div class="quick-login">
             <div class="quick-login-heading">Tài Khoản sử dụng nhanh</div>
@@ -145,7 +146,7 @@ function showRegister() {
     <section class="login-screen">
       <div class="login-art">
         <div class="login-art-main">
-          <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
+          <div class="brand"><span class="brand-mark">${icon("flask")}</span><span>LabEquip</span></div>
           <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
             <h1>Tạo tài khoản<br>người dùng.</h1>
             <p>Đăng ký để tra cứu thiết bị và gửi yêu cầu mượn tại phòng thực hành.</p></div>
@@ -179,9 +180,9 @@ function renderShell() {
   root.innerHTML = `
     <div class="shell">
       <aside class="sidebar ${state.menuOpen ? "open" : ""}" id="sidebar">
-        <a class="brand" href="#dashboard"><span class="brand-mark">⌘</span><span>LabEquip</span></a>
+        <a class="brand" href="#dashboard"><span class="brand-mark">${icon("flask")}</span><span>LabEquip</span></a>
         <div class="nav-caption">Không gian làm việc</div>
-        <nav class="nav-list">${nav.map((route) => `<a class="nav-link ${route === state.route ? "active" : ""}" href="#${route}"><span class="nav-icon">${icons[route]}</span>${titles[route]}</a>`).join("")}</nav>
+        <nav class="nav-list">${nav.map((route) => `<a class="nav-link ${route === state.route ? "active" : ""}" href="#${route}"><span class="nav-icon">${icon(icons[route])}</span>${titles[route]}</a>`).join("")}</nav>
         <div class="sidebar-bottom">
           <button class="btn btn-outline btn-block" data-action="logout">Đăng xuất</button>
           <div class="profile-mini"><span class="avatar">${esc((state.user.full_name || "?").slice(0, 1).toUpperCase())}</span><div style="min-width:0"><div class="profile-name">${esc(state.user.full_name)}</div><div class="profile-role">${esc(roleVi[state.user.role] || state.user.role)}</div></div></div>
@@ -189,8 +190,8 @@ function renderShell() {
       </aside>
       <button class="mobile-overlay ${state.menuOpen ? "show" : ""}" data-action="close-menu" aria-label="Đóng menu"></button>
       <section class="main-area">
-        <header class="topbar"><div class="topbar-left"><button class="icon-btn mobile-menu" data-action="toggle-menu" aria-label="Mở menu">☰</button><div class="top-title">${esc(titles[state.route] || "LabEquip")}</div><span class="top-date">${new Intl.DateTimeFormat("vi-VN", { dateStyle: "full" }).format(new Date())}</span></div>
-          <div class="topbar-actions"><button class="icon-btn" data-route="notifications" aria-label="Thông báo">♧<span class="dot hidden" id="notice-dot"></span></button><span class="avatar">${esc((state.user.full_name || "?").slice(0, 1).toUpperCase())}</span></div>
+        <header class="topbar"><div class="topbar-left"><button class="icon-btn mobile-menu" data-action="toggle-menu" aria-label="Mở menu">${icon("menu")}</button><div class="top-title">${esc(titles[state.route] || "LabEquip")}</div><span class="top-date">${new Intl.DateTimeFormat("vi-VN", { dateStyle: "full" }).format(new Date())}</span></div>
+          <div class="topbar-actions"><button class="icon-btn" data-route="notifications" aria-label="Thông báo">${icon("bell")}<span class="dot hidden" id="notice-dot"></span></button><span class="avatar">${esc((state.user.full_name || "?").slice(0, 1).toUpperCase())}</span></div>
         </header>
         <main class="content" id="page-content"></main>
       </section>
@@ -201,8 +202,8 @@ function heading(title, description, actions = "") {
   return `<div class="page-heading"><div><div class="eyebrow">LABEQUIP / ${esc(roleVi[state.user.role] || state.user.role)}</div><h1>${esc(title)}</h1><p>${esc(description)}</p></div><div class="heading-actions">${actions}</div></div>`;
 }
 function loadingBlock() { return `<div class="loading-state"><div class="spinner"></div>Đang tải dữ liệu từ máy chủ…</div>`; }
-function emptyBlock(text) { return `<div class="empty-state"><div class="state-icon">⌕</div>${esc(text)}</div>`; }
-function errorBlock(message) { return `<div class="error-state"><div class="state-icon">!</div>${esc(message)}<div style="margin-top:14px"><button class="btn btn-outline btn-sm" data-action="reload">Thử lại</button></div></div>`; }
+function emptyBlock(text) { return `<div class="empty-state"><div class="state-icon">${icon("search")}</div>${esc(text)}</div>`; }
+function errorBlock(message) { return `<div class="error-state"><div class="state-icon">${icon("alert")}</div>${esc(message)}<div style="margin-top:14px"><button class="btn btn-outline btn-sm" data-action="reload">Thử lại</button></div></div>`; }
 
 async function loadRoute() {
   state.route = location.hash.replace(/^#\/?/, "").split("?")[0] || "dashboard";
@@ -244,7 +245,7 @@ async function renderDashboard(container) {
     const result = await api.get("/maintenance?page=1&page_size=100");
     const items = result.items || [];
     container.innerHTML = heading("Bảng điều khiển", "Theo dõi và xử lý các yêu cầu sửa chữa thiết bị.")
-      + `<section class="grid stats-grid">${stat("Cần tiếp nhận", items.filter((x) => x.status === "REPORTED").length, "Yêu cầu mới", "⌁")}${stat("Đang sửa chữa", items.filter((x) => ["ACCEPTED", "IN_PROGRESS"].includes(x.status)).length, "Đang xử lý", "⚙")}${stat("Hoàn thành", items.filter((x) => x.status === "COMPLETED").length, "Tổng trong trang", "✓")}${stat("Tổng yêu cầu", result.total ?? items.length, "Dữ liệu API", "▤")}</section>`
+      + `<section class="grid stats-grid">${stat("Cần tiếp nhận", items.filter((x) => x.status === "REPORTED").length, "Yêu cầu mới", "clipboardPlus")}${stat("Đang sửa chữa", items.filter((x) => ["ACCEPTED", "IN_PROGRESS"].includes(x.status)).length, "Đang xử lý", "wrench")}${stat("Hoàn thành", items.filter((x) => x.status === "COMPLETED").length, "Tổng trong trang", "checkCircle")}${stat("Tổng yêu cầu", result.total ?? items.length, "Dữ liệu API", "database")}</section>`
       + `<section class="panel"><div class="panel-head"><div><h2 class="panel-title">Yêu cầu mới nhất</h2><p class="panel-subtitle">Yêu cầu bảo trì gần đây từ máy chủ</p></div><a class="btn btn-outline btn-sm" href="#maintenance">Xem tất cả</a></div>${quickRows(items.slice(0, 5), (x) => `${statusVi[x.status] || x.status} · ${shortId(x.device_id)}`, (x) => x.description)}</section>`;
     return;
   }
@@ -260,8 +261,8 @@ async function renderDashboard(container) {
   const pending = loans.filter((x) => x.status === "PENDING").length;
   const availableCount = devices.reduce((total, x) => total + Number(x.quantity_available || 0), 0);
   const cards = role === "ADMIN"
-    ? [stat("Tổng thiết bị", values[0].total ?? devices.length, "Theo dữ liệu API", "▣"), stat("Chờ duyệt", pending, "Yêu cầu mượn", "◷"), stat("Đang mượn", loans.filter((x) => x.status === "CHECKED_OUT").length, "Chưa quá hạn", "⇄"), stat("Quá hạn", overdue, overdue ? "Cần xử lý ngay" : "Không có phiếu quá hạn", "⚠", overdue > 0)]
-    : [stat("Thiết bị sẵn sàng", availableCount, "Tồn khả dụng trong trang", "▣"), stat("Phiếu mượn", values[1].total ?? loans.length, "Tài khoản của bạn", "⇄"), stat("Đang mượn", loans.filter((x) => ["CHECKED_OUT", "OVERDUE"].includes(x.status)).length, "Thiết bị cần hoàn trả", "◷"), stat("Quá hạn", overdue, overdue ? "Vui lòng liên hệ quản trị" : "Không có phiếu quá hạn", "⚠", overdue > 0)];
+    ? [stat("Tổng thiết bị", values[0].total ?? devices.length, "Theo dữ liệu API", "package"), stat("Chờ duyệt", pending, "Yêu cầu mượn", "clock"), stat("Đang mượn", loans.filter((x) => x.status === "CHECKED_OUT").length, "Chưa quá hạn", "exchange"), stat("Quá hạn", overdue, overdue ? "Cần xử lý ngay" : "Không có phiếu quá hạn", "alert", overdue > 0)]
+    : [stat("Thiết bị sẵn sàng", availableCount, "Tồn khả dụng trong trang", "package"), stat("Phiếu mượn", values[1].total ?? loans.length, "Tài khoản của bạn", "exchange"), stat("Đang mượn", loans.filter((x) => ["CHECKED_OUT", "OVERDUE"].includes(x.status)).length, "Thiết bị cần hoàn trả", "clock"), stat("Quá hạn", overdue, overdue ? "Vui lòng liên hệ quản trị" : "Không có phiếu quá hạn", "alert", overdue > 0)];
   const distribution = [
     ["Chờ duyệt", loans.filter((x) => x.status === "PENDING").length],
     ["Đã duyệt", loans.filter((x) => x.status === "APPROVED").length],
@@ -281,17 +282,17 @@ async function renderDashboard(container) {
         </div>
         <div class="panel"><div class="panel-head"><div><h2 class="panel-title">Hoạt động gần đây</h2><p class="panel-subtitle">Các phiếu mượn mới nhất</p></div></div>
         ${loans.length ? quickRows(loans.slice(0, 5), (x) => `${statusVi[x.status] || x.status} · ${shortId(x.id)}`, (x) => `Hạn trả ${fmtDate(x.due_at)}`) : emptyBlock("Chưa có phiếu mượn nào.")}
-        ${role === "BORROWER" ? `<a class="btn btn-primary btn-block" style="margin-top:12px" href="#request-loan">+ Tạo yêu cầu mượn</a>` : ""}</div>
+        ${role === "BORROWER" ? `<a class="btn btn-primary btn-block" style="margin-top:12px" href="#request-loan">${icon("plus")} Tạo yêu cầu mượn</a>` : ""}</div>
       </section>`;
   if (notices.some((x) => !x.is_read)) document.querySelector("#notice-dot")?.classList.remove("hidden");
 }
 
-function stat(label, value, foot, icon, alert = false) {
-  return `<article class="stat-card"><div><div class="stat-label">${esc(label)}</div><div class="stat-value" ${alert ? 'style="color:#d92d20"' : ""}>${esc(value)}</div><div class="stat-foot">${esc(foot)}</div></div><div class="stat-icon">${icon}</div></article>`;
+function stat(label, value, foot, iconName, alert = false) {
+  return `<article class="stat-card"><div><div class="stat-label">${esc(label)}</div><div class="stat-value" ${alert ? 'style="color:#d92d20"' : ""}>${esc(value)}</div><div class="stat-foot">${esc(foot)}</div></div><div class="stat-icon">${icon(iconName)}</div></article>`;
 }
 function quickRows(items, titleFn, descFn) {
   if (!items.length) return emptyBlock("Chưa có dữ liệu.");
-  return `<div class="quick-list">${items.map((item) => `<div class="quick-row"><span class="quick-bullet">↗</span><div class="quick-text"><div class="quick-title">${esc(titleFn(item))}</div><div class="quick-desc">${esc(descFn(item) || "—")}</div></div></div>`).join("")}</div>`;
+  return `<div class="quick-list">${items.map((item) => `<div class="quick-row"><span class="quick-bullet">${icon("arrowUpRight")}</span><div class="quick-text"><div class="quick-title">${esc(titleFn(item))}</div><div class="quick-desc">${esc(descFn(item) || "—")}</div></div></div>`).join("")}</div>`;
 }
 
 function queryString(params) {
@@ -305,9 +306,9 @@ async function renderEntity(container, key) {
   const result = await api.get(`${config.endpoint}?${queryString(params)}`);
   const items = result.items || [];
   state.lastRows = items;
-  const actions = state.user.role === "ADMIN" ? `<button class="btn btn-primary" data-action="create-entity" data-key="${key}">+ Thêm mới</button>` : "";
+  const actions = state.user.role === "ADMIN" ? `<button class="btn btn-primary" data-action="create-entity" data-key="${key}">${icon("plus")} Thêm mới</button>` : "";
   const headingActions = key === "devices" && state.user.role === "ADMIN"
-    ? `<button class="btn btn-outline" data-action="report-damage">⚠ Báo hỏng</button>${actions}` : actions;
+    ? `<button class="btn btn-outline" data-action="report-damage">${icon("alert")} Báo hỏng</button>${actions}` : actions;
   const filters = `${config.search ? `<input type="search" data-filter="q" value="${esc(state.q)}" placeholder="Tìm kiếm ${esc(config.title.toLowerCase())}…" aria-label="Tìm kiếm">` : ""}
     ${config.filter ? `<select data-filter="status" aria-label="Lọc trạng thái"><option value="">Tất cả trạng thái</option>${["AVAILABLE", "MAINTENANCE", "RETIRED"].map((x) => `<option value="${x}" ${state.status === x ? "selected" : ""}>${statusVi[x]}</option>`).join("")}</select>` : ""}
     <span class="toolbar-spacer"></span><span class="muted">${esc(result.total ?? items.length)} kết quả</span>`;
@@ -328,7 +329,7 @@ function paginationHTML(result) {
   const pageSize = result.page_size || 20;
   const total = result.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / pageSize));
-  return `<div class="pagination"><span>Trang ${page} / ${pages} · ${total} bản ghi</span><div class="pagination-actions"><button class="btn btn-outline btn-sm" data-action="page" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>← Trước</button><button class="btn btn-outline btn-sm" data-action="page" data-page="${page + 1}" ${page >= pages ? "disabled" : ""}>Sau →</button></div></div>`;
+  return `<div class="pagination"><span>Trang ${page} / ${pages} · ${total} bản ghi</span><div class="pagination-actions"><button class="btn btn-outline btn-sm" data-action="page" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>${icon("arrowLeft")} Trước</button><button class="btn btn-outline btn-sm" data-action="page" data-page="${page + 1}" ${page >= pages ? "disabled" : ""}>Sau ${icon("arrowRight")}</button></div></div>`;
 }
 function tableHTML(key, items) {
   if (!items.length) return emptyBlock("Không tìm thấy dữ liệu phù hợp.");
@@ -391,7 +392,7 @@ async function renderLoans(container) {
   state.lastRows = result.items || [];
   const statuses = ["PENDING", "APPROVED", "REJECTED", "CHECKED_OUT", "RETURNED", "OVERDUE", "CANCELLED"];
   const filters = `<select data-filter="status" aria-label="Lọc trạng thái"><option value="">Tất cả trạng thái</option>${statuses.map((x) => `<option value="${x}" ${state.status === x ? "selected" : ""}>${statusVi[x]}</option>`).join("")}</select><span class="toolbar-spacer"></span><span class="muted">${esc(result.total ?? 0)} phiếu</span>`;
-  const add = state.user.role === "BORROWER" ? `<a class="btn btn-primary" href="#request-loan">+ Đăng ký mượn</a>` : "";
+  const add = state.user.role === "BORROWER" ? `<a class="btn btn-primary" href="#request-loan">${icon("plus")} Đăng ký mượn</a>` : "";
   container.innerHTML = heading("Phiếu mượn", "Theo dõi trạng thái và lịch sử bàn giao – hoàn trả thiết bị.", add)
     + `<section class="table-panel"><div class="toolbar">${filters}</div>${tableHTML("loans", result.items || [])}${paginationHTML(result)}</section>`;
 }
@@ -400,7 +401,7 @@ async function renderMaintenance(container) {
   const result = await api.get(`/maintenance?${queryString({ page: state.page, page_size: 20, status: state.status })}`);
   state.lastRows = result.items || [];
   const filters = `<select data-filter="status"><option value="">Tất cả trạng thái</option>${["REPORTED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"].map((x) => `<option value="${x}" ${state.status === x ? "selected" : ""}>${statusVi[x]}</option>`).join("")}</select><span class="toolbar-spacer"></span><span class="muted">${esc(result.total ?? 0)} yêu cầu</span>`;
-  const add = state.user.role === "ADMIN" ? `<button class="btn btn-primary" data-action="report-damage">+ Báo thiết bị hỏng</button>` : "";
+  const add = state.user.role === "ADMIN" ? `<button class="btn btn-primary" data-action="report-damage">${icon("plus")} Báo thiết bị hỏng</button>` : "";
   container.innerHTML = heading("Bảo trì thiết bị", "Ghi nhận sự cố và theo dõi toàn bộ quy trình sửa chữa.", add)
     + `<section class="table-panel"><div class="toolbar">${filters}</div>${tableHTML("maintenance", result.items || [])}${paginationHTML(result)}</section>`;
 }
@@ -411,7 +412,7 @@ async function renderNotifications(container) {
   const unread = items.filter((item) => !item.is_read);
   document.querySelector("#notice-dot")?.classList.toggle("hidden", unread.length === 0);
   container.innerHTML = heading("Thông báo", "Cập nhật về yêu cầu mượn, trả thiết bị và bảo trì.")
-    + (items.length ? `<section class="notice-list">${items.map((item) => `<article class="notice ${item.is_read ? "" : "unread"}"><span class="quick-bullet">♧</span><div class="notice-main"><div class="notice-title">${esc(item.title)}</div><div class="notice-message">${esc(item.message)}</div><div class="notice-time">${fmtDate(item.created_at)}</div></div>${item.is_read ? "" : `<button class="btn btn-outline btn-sm" data-action="mark-read" data-id="${esc(item.id)}">Đã đọc</button>`}</article>`).join("")}</section>` : emptyBlock("Bạn chưa có thông báo nào."));
+    + (items.length ? `<section class="notice-list">${items.map((item) => `<article class="notice ${item.is_read ? "" : "unread"}"><span class="quick-bullet">${icon("bell")}</span><div class="notice-main"><div class="notice-title">${esc(item.title)}</div><div class="notice-message">${esc(item.message)}</div><div class="notice-time">${fmtDate(item.created_at)}</div></div>${item.is_read ? "" : `<button class="btn btn-outline btn-sm" data-action="mark-read" data-id="${esc(item.id)}">Đã đọc</button>`}</article>`).join("")}</section>` : emptyBlock("Bạn chưa có thông báo nào."));
 }
 
 async function renderRequestLoan(container) {
@@ -426,7 +427,7 @@ async function renderRequestLoan(container) {
       ${rooms.items?.length ? "" : `<div class="login-note">Chưa có phòng hoạt động. Liên hệ quản trị viên.</div>`}
       <div class="field"><label for="loan-room">Phòng thực hành</label><select id="loan-room" name="room_id" required><option value="">Chọn phòng</option>${roomOptions}</select></div>
       <div class="details-grid">${dateTimeControl("starts_at", "Thời gian bắt đầu")}${dateTimeControl("due_at", "Thời gian dự kiến trả")}</div>
-      <div class="panel-head"><div><h3 class="panel-title">Thiết bị yêu cầu</h3><p class="panel-subtitle">Tồn kho được kiểm tra lại bởi backend khi gửi.</p></div><button class="btn btn-outline btn-sm" type="button" data-action="add-loan-line">+ Thêm dòng</button></div>
+      <div class="panel-head"><div><h3 class="panel-title">Thiết bị yêu cầu</h3><p class="panel-subtitle">Tồn kho được kiểm tra lại bởi backend khi gửi.</p></div><button class="btn btn-outline btn-sm" type="button" data-action="add-loan-line">${icon("plus")} Thêm dòng</button></div>
       <div id="loan-lines">${loanLine(deviceOptions, 0)}</div>
       <div class="field"><label for="loan-reason">Lý do (bắt buộc nếu ngoài lịch học)</label><textarea id="loan-reason" name="reason" maxlength="2000" placeholder="Mô tả mục đích sử dụng nếu yêu cầu ngoài lịch…"></textarea></div>
       <button class="btn btn-primary" type="submit">Gửi yêu cầu mượn</button>
@@ -440,7 +441,7 @@ async function renderSettings(container) {
   const result = await api.get("/settings");
   const items = result.items || [];
   const rows = items.map((item) => `<tr><td><span class="cell-primary">${esc(item.key)}</span></td><td>${esc(JSON.stringify(item.value))}</td><td>${esc(item.description || "—")}</td><td><button class="btn btn-outline btn-sm" data-action="edit-setting" data-key="${esc(item.key)}">Sửa</button><button class="btn btn-danger btn-sm" data-action="delete-setting" data-key="${esc(item.key)}">Xóa</button></td></tr>`).join("");
-  container.innerHTML = heading("Cài đặt", "Quản lý cấu hình JSON do backend lưu trữ.", `<button class="btn btn-primary" data-action="create-setting">+ Thêm cấu hình</button>`)
+  container.innerHTML = heading("Cài đặt", "Quản lý cấu hình JSON do backend lưu trữ.", `<button class="btn btn-primary" data-action="create-setting">${icon("plus")} Thêm cấu hình</button>`)
     + `<section class="table-panel"><div class="table-wrap"><table><thead><tr><th>Khóa</th><th>Giá trị JSON</th><th>Mô tả</th><th>Thao tác</th></tr></thead><tbody>${rows}</tbody></table></div>${items.length ? "" : emptyBlock("Chưa có cấu hình.")}</section>`;
 }
 
@@ -500,7 +501,7 @@ async function openEntityForm(key, record = null) {
 }
 
 function showModal(title, body, footer = `<button class="btn btn-outline" data-action="close-modal">Đóng</button>`) {
-  modalRoot.innerHTML = `<div class="modal-backdrop" data-action="backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header class="modal-head"><h2>${esc(title)}</h2><button class="icon-btn" data-action="close-modal" aria-label="Đóng">×</button></header><div class="modal-body">${body}</div><footer class="modal-foot">${footer}</footer></section></div>`;
+  modalRoot.innerHTML = `<div class="modal-backdrop" data-action="backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header class="modal-head"><h2>${esc(title)}</h2><button class="icon-btn" data-action="close-modal" aria-label="Đóng">${icon("close")}</button></header><div class="modal-body">${body}</div><footer class="modal-foot">${footer}</footer></section></div>`;
 }
 function closeModal() { modalRoot.innerHTML = ""; }
 
