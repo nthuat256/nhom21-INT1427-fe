@@ -44,7 +44,9 @@ Mở `http://localhost:5500`. Địa chỉ API được ẩn khỏi giao diện 
 - **ADMIN (Nhà trường):** dashboard, quản lý/cập nhật người dùng và phân vai trò, phòng, danh mục, thiết bị và in nhãn QR, lịch học, duyệt/từ chối yêu cầu, xác nhận bàn giao/nhận trả, báo hỏng và settings.
 - **TECHNICIAN (Người vận hành):** dashboard bảo trì, tiếp nhận, bắt đầu sửa, ghi chú tiến độ, lịch sử và hoàn tất sau khi xác nhận kiểm tra đạt.
 
-API Backend chịu trách nhiệm quyền, kiểm tra tồn kho, trạng thái nghiệp vụ, hạn trả và ghi lịch sử/audit. Frontend hiển thị lỗi API thay vì giả lập thành công. Bảng sử dụng phân trang phía máy chủ; tìm kiếm/lọc chỉ gửi những query parameter mà endpoint hỗ trợ. Dashboard tổng hợp các bản ghi hiện được tải (tối đa 100) và số tổng do API trả về khi có.
+API Backend chịu trách nhiệm quyền, kiểm tra tồn kho, trạng thái nghiệp vụ, hạn trả và ghi lịch sử/audit. Frontend hiển thị lỗi API thay vì giả lập thành công. Bảng sử dụng phân trang phía máy chủ; tìm kiếm/lọc chỉ gửi những query parameter mà endpoint hỗ trợ. Dashboard Nhà trường so sánh cả bảy trạng thái phiếu mượn từ tối đa 100 bản ghi đã tải và hiển thị số tổng do API trả về khi có.
+
+Thông báo lỗi từ API và kiểm tra biểu mẫu được hiển thị bằng tiếng Việt. Thời gian trong lịch học và phiếu mượn nhập theo định dạng 24 giờ `HH:MM`.
 
 ## Ghi chú vận hành
 

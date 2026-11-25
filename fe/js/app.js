@@ -81,10 +81,14 @@ function esc(value) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[char]);
 }
+function userErrorMessage(error) {
+  const message = typeof error?.message === "string" ? error.message.trim() : "";
+  return /[À-ỹĐđ]/.test(message) ? message : "Đã xảy ra lỗi. Vui lòng kiểm tra thông tin và thử lại.";
+}
 function fmtDate(value) {
   if (!value) return "—";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? esc(value) : new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return Number.isNaN(date.getTime()) ? esc(value) : new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short", hourCycle: "h23" }).format(date);
 }
 function shortId(value) { return value ? `${value.slice(0, 8)}…` : "—"; }
 function statusBadge(value) {
@@ -107,32 +111,30 @@ function showLogin(error = "") {
   root.innerHTML = `
     <section class="login-screen">
       <div class="login-art">
-        <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
-        <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
-          <h1>Thiết bị tốt.<br>Thực hành tốt.</h1>
-          <p>Quản lý mượn, trả và bảo trì thiết bị phòng thực hành trong một hệ thống thống nhất.</p></div>
-        <div class="login-art-foot">Hệ thống quản lý thiết bị phòng thực hành</div>
+        <div class="login-art-main">
+          <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
+          <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
+            <h1>Thiết bị tốt.<br>Thực hành tốt.</h1>
+            <p>Quản lý mượn, trả và bảo trì thiết bị phòng thực hành .</p></div>
+        </div>
       </div>
       <div class="login-panel">
         <form class="login-card" id="login-form">
-          <div class="eyebrow">CHÀO MỪNG TRỞ LẠI</div><h2>Đăng nhập</h2>
-          <p>Sử dụng tài khoản được cấp bởi nhà trường.</p>
+          <h2>Đăng nhập</h2>
           ${error ? `<div class="login-note" style="color:#b42318;background:#fff2f0">${esc(error)}</div>` : ""}
           <div class="field"><label for="login-email">Email tài khoản</label><input id="login-email" name="email" type="email" autocomplete="username" required placeholder="ten@university.edu"></div>
           <div class="field"><label for="login-password">Mật khẩu</label><input id="login-password" name="password" type="password" autocomplete="current-password" required></div>
           <button class="btn btn-primary btn-block" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
           <button class="btn btn-outline btn-block" style="margin-top:9px" type="button" data-action="show-register">Tạo tài khoản người dùng</button>
           <div class="quick-login">
-            <div class="quick-login-heading">Hoặc trải nghiệm nhanh theo vai trò</div>
+            <div class="quick-login-heading">Tài Khoản sử dụng nhanh</div>
             <div class="quick-login-grid">${demoAccounts.map(([role, label, description, email, password]) => `
               <button class="quick-login-option" type="button" data-action="fill-demo-login" data-email="${email}" data-password="${password}" aria-label="Điền tài khoản mẫu vai trò ${label}">
                 <span class="quick-login-label">${label}</span>
                 <span class="quick-login-description">${description}</span>
                 <span class="quick-login-role">${role}</span>
               </button>`).join("")}</div>
-            <div class="login-note">Tài khoản demo cần được tạo trước bằng lệnh <code>python -m api.cli seed-demo</code>.</div>
           </div>
-          <div class="login-note">Đăng nhập bằng email và mật khẩu của tài khoản đã được tạo.</div>
         </form>
       </div>
     </section>`;
@@ -142,16 +144,17 @@ function showRegister() {
   root.innerHTML = `
     <section class="login-screen">
       <div class="login-art">
-        <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
-        <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
-          <h1>Tạo tài khoản<br>người dùng.</h1>
-          <p>Đăng ký để tra cứu thiết bị và gửi yêu cầu mượn tại phòng thực hành.</p></div>
+        <div class="login-art-main">
+          <div class="brand"><span class="brand-mark">⌘</span><span>LabEquip</span></div>
+          <div><div class="eyebrow" style="color:#d6e4ff">LABORATORY OPERATIONS</div>
+            <h1>Tạo tài khoản<br>người dùng.</h1>
+            <p>Đăng ký để tra cứu thiết bị và gửi yêu cầu mượn tại phòng thực hành.</p></div>
+        </div>
         <div class="login-art-foot">Tài khoản đăng ký mới được cấp quyền Người dùng.</div>
       </div>
       <div class="login-panel">
         <form class="login-card" id="register-form">
           <div class="eyebrow">ĐĂNG KÝ TÀI KHOẢN</div><h2>Tạo tài khoản</h2>
-          <p>Tài khoản mới chỉ có quyền Người dùng (BORROWER).</p>
           <div class="field"><label for="register-name">Họ và tên</label><input id="register-name" name="full_name" autocomplete="name" required minlength="2" maxlength="160"></div>
           <div class="field"><label for="register-email">Email</label><input id="register-email" name="email" type="email" autocomplete="email" required placeholder="ten@university.edu"></div>
           <div class="field"><label for="register-id">Mã sinh viên / giảng viên (không bắt buộc)</label><input id="register-id" name="student_or_staff_id" maxlength="64"></div>
@@ -231,7 +234,7 @@ async function renderPage() {
     if (entityConfig[state.route]) return await renderEntity(container, state.route);
     container.innerHTML = errorBlock("Không tìm thấy trang yêu cầu.");
   } catch (error) {
-    container.innerHTML = errorBlock(error.message);
+    container.innerHTML = errorBlock(userErrorMessage(error));
   }
 }
 
@@ -262,15 +265,17 @@ async function renderDashboard(container) {
   const distribution = [
     ["Chờ duyệt", loans.filter((x) => x.status === "PENDING").length],
     ["Đã duyệt", loans.filter((x) => x.status === "APPROVED").length],
+    ["Từ chối", loans.filter((x) => x.status === "REJECTED").length],
     ["Đang mượn", loans.filter((x) => x.status === "CHECKED_OUT").length],
     ["Đã trả", loans.filter((x) => x.status === "RETURNED").length],
     ["Quá hạn", overdue],
+    ["Đã hủy", loans.filter((x) => x.status === "CANCELLED").length],
   ];
   const max = Math.max(1, ...distribution.map((x) => x[1]));
   container.innerHTML = heading("Bảng điều khiển", role === "ADMIN" ? "Tổng quan hoạt động mượn trả và tài sản phòng thực hành." : "Chào mừng bạn trở lại. Theo dõi các thiết bị và phiếu mượn của mình.")
     + `<section class="grid stats-grid">${cards.join("")}</section>
       <section class="grid dashboard-grid">
-        <div class="chart-panel"><div class="panel-head"><div><h2 class="panel-title">Tình trạng phiếu mượn</h2><p class="panel-subtitle">Thống kê dữ liệu đang được tải từ API</p></div><a href="#loans" class="btn btn-outline btn-sm">Danh sách phiếu</a></div>
+        <div class="chart-panel"><div class="panel-head"><div><h2 class="panel-title">Tình trạng phiếu mượn</h2><p class="panel-subtitle">So sánh số phiếu ở tất cả trạng thái</p></div><a href="#loans" class="btn btn-outline btn-sm">Danh sách phiếu</a></div>
           <div class="chart">${distribution.map(([label, count]) => `<div class="bar-col"><span class="bar-value">${count}</span><div class="bar" style="height:${Math.max(3, count / max * 145)}px"></div><span class="bar-label">${label}</span></div>`).join("")}</div>
           <div class="legend">${distribution.map(([label, count]) => `<span><i></i>${label}: ${count}</span>`).join("")}</div>
         </div>
@@ -420,7 +425,7 @@ async function renderRequestLoan(container) {
     + `<section class="panel" style="max-width:780px"><form id="loan-create-form">
       ${rooms.items?.length ? "" : `<div class="login-note">Chưa có phòng hoạt động. Liên hệ quản trị viên.</div>`}
       <div class="field"><label for="loan-room">Phòng thực hành</label><select id="loan-room" name="room_id" required><option value="">Chọn phòng</option>${roomOptions}</select></div>
-      <div class="details-grid"><div class="field"><label for="loan-starts">Thời gian bắt đầu</label><input id="loan-starts" type="datetime-local" name="starts_at" required></div><div class="field"><label for="loan-due">Thời gian dự kiến trả</label><input id="loan-due" type="datetime-local" name="due_at" required></div></div>
+      <div class="details-grid">${dateTimeControl("starts_at", "Thời gian bắt đầu")}${dateTimeControl("due_at", "Thời gian dự kiến trả")}</div>
       <div class="panel-head"><div><h3 class="panel-title">Thiết bị yêu cầu</h3><p class="panel-subtitle">Tồn kho được kiểm tra lại bởi backend khi gửi.</p></div><button class="btn btn-outline btn-sm" type="button" data-action="add-loan-line">+ Thêm dòng</button></div>
       <div id="loan-lines">${loanLine(deviceOptions, 0)}</div>
       <div class="field"><label for="loan-reason">Lý do (bắt buộc nếu ngoài lịch học)</label><textarea id="loan-reason" name="reason" maxlength="2000" placeholder="Mô tả mục đích sử dụng nếu yêu cầu ngoài lịch…"></textarea></div>
@@ -447,11 +452,24 @@ function fieldControl([name, label, type, required], value = "", options = []) {
     const opts = options.map(([key, text]) => `<option value="${esc(key)}" ${String(value) === String(key) ? "selected" : ""}>${esc(text)}</option>`).join("");
     return `<div class="field"><label for="field-${esc(name)}">${esc(label)}</label><select id="field-${esc(name)}" name="${esc(name)}" ${req}><option value="">Chọn ${esc(label.toLowerCase())}</option>${opts}</select></div>`;
   }
+  if (type === "datetime-local") return dateTimeControl(name, label, value, req);
   const inputType = type === "textarea" ? "textarea" : "input";
   const input = inputType === "textarea"
     ? `<textarea id="field-${esc(name)}" name="${esc(name)}" ${req}>${safe}</textarea>`
     : `<input id="field-${esc(name)}" name="${esc(name)}" type="${esc(type)}" value="${safe}" ${req} ${type === "number" ? 'min="1"' : ""}>`;
   return `<div class="field"><label for="field-${esc(name)}">${esc(label)}</label>${input}</div>`;
+}
+
+function dateTimeControl(name, label, value = "", required = "required") {
+  const date = new Date(value);
+  const hasValue = value && !Number.isNaN(date.getTime());
+  const pad = (part) => String(part).padStart(2, "0");
+  const dateValue = hasValue ? `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` : "";
+  const timeValue = hasValue ? `${pad(date.getHours())}:${pad(date.getMinutes())}` : "";
+  return `<div class="field"><label>${esc(label)}</label><div class="date-time-fields">
+    <input type="date" name="${esc(name)}_date" value="${dateValue}" ${required} aria-label="${esc(label)} - ngày">
+    <input type="text" name="${esc(name)}_time" value="${timeValue}" ${required} inputmode="numeric" placeholder="HH:MM" pattern="(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]" maxlength="5" aria-label="${esc(label)} - giờ 24 giờ">
+  </div><span class="field-hint">Nhập giờ theo định dạng 24 giờ (HH:MM).</span></div>`;
 }
 
 async function optionsFor(type) {
@@ -561,10 +579,18 @@ function printDeviceAction(id) {
 
 function formValues(form) {
   const data = {};
+  const dateTimeParts = {};
   for (const [key, value] of new FormData(form).entries()) {
-    if (key === "starts_at" || key === "ends_at") data[key] = new Date(value).toISOString();
+    const dateTimeMatch = key.match(/^(starts_at|ends_at|due_at)_(date|time)$/);
+    if (dateTimeMatch) {
+      dateTimeParts[dateTimeMatch[1]] = dateTimeParts[dateTimeMatch[1]] || {};
+      dateTimeParts[dateTimeMatch[1]][dateTimeMatch[2]] = value;
+    } else if (key === "starts_at" || key === "ends_at") data[key] = new Date(value).toISOString();
     else if (key === "quantity" || key === "capacity" || key === "quantity_total") data[key] = Number(value);
     else if (value !== "") data[key] = value;
+  }
+  for (const [key, parts] of Object.entries(dateTimeParts)) {
+    if (parts.date && parts.time) data[key] = new Date(`${parts.date}T${parts.time}`).toISOString();
   }
   for (const checkbox of form.querySelectorAll('input[type="checkbox"]')) data[checkbox.name] = checkbox.checked;
   return data;
@@ -602,6 +628,9 @@ async function handleSubmit(event) {
       const id = form.dataset.id;
       const payload = formValues(form);
       const cfg = entityConfig[key];
+      if (key === "schedules" && new Date(payload.ends_at) <= new Date(payload.starts_at)) {
+        throw new Error("Thời gian kết thúc phải sau thời gian bắt đầu.");
+      }
       if (key === "users" && !id) {
         await api.post("/auth/register", payload);
         closeModal(); toast("Đã tạo tài khoản BORROWER."); await renderPage(); return;
@@ -616,6 +645,10 @@ async function handleSubmit(event) {
     }
     if (form.id === "loan-create-form") {
       const base = formValues(form);
+      const startsAt = new Date(base.starts_at);
+      const dueAt = new Date(base.due_at);
+      if (startsAt <= new Date()) throw new Error("Thời gian bắt đầu phải ở tương lai.");
+      if (dueAt <= startsAt) throw new Error("Thời gian dự kiến trả phải sau thời gian bắt đầu.");
       const rows = [...form.querySelectorAll(".loan-line")].map((row) => ({
         device_id: row.querySelector('[name="device_id"]').value,
         quantity: Number(row.querySelector('[name="quantity"]').value),
@@ -656,7 +689,7 @@ async function handleSubmit(event) {
       closeModal(); toast("Đã lưu cấu hình."); await renderPage(); return;
     }
   } catch (error) {
-    toast(error.message, true);
+    toast(userErrorMessage(error), true);
   } finally {
     if (submit?.isConnected) submit.disabled = false;
   }
@@ -722,7 +755,7 @@ async function handleAction(button) {
       if (!window.confirm(`Xóa cấu hình "${button.dataset.key}"?`)) return;
       await api.delete(`/settings/${encodeURIComponent(button.dataset.key)}`); toast("Đã xóa cấu hình."); await renderPage(); return;
     }
-  } catch (error) { toast(error.message, true); }
+  } catch (error) { toast(userErrorMessage(error), true); }
 }
 
 async function handleFilter(element) {
@@ -737,8 +770,45 @@ async function handleFilter(element) {
   }
 }
 
+function localizedValidationMessage(control) {
+  const label = (control.labels?.[0]?.textContent || control.getAttribute("aria-label") || "Trường này").trim().replace(/\s*\([^)]*\)\s*$/, "");
+  const validity = control.validity;
+  if (validity.valueMissing) {
+    if (control.type === "checkbox") return `Vui lòng xác nhận ${label.toLowerCase()}.`;
+    if (control.tagName === "SELECT") return `Vui lòng chọn ${label.toLowerCase()}.`;
+    return `Vui lòng nhập ${label.toLowerCase()}.`;
+  }
+  if (validity.typeMismatch && control.type === "email") return "Vui lòng nhập địa chỉ email hợp lệ.";
+  if (validity.tooShort) return `${label} cần có ít nhất ${control.minLength} ký tự.`;
+  if (validity.tooLong) return `${label} không được vượt quá ${control.maxLength} ký tự.`;
+  if (validity.rangeUnderflow) return `${label} phải lớn hơn hoặc bằng ${control.min}.`;
+  if (validity.rangeOverflow) return `${label} phải nhỏ hơn hoặc bằng ${control.max}.`;
+  if (validity.stepMismatch) return `Vui lòng chọn giá trị hợp lệ cho ${label.toLowerCase()}.`;
+  if (validity.patternMismatch && control.name.endsWith("_time")) return "Nhập giờ theo định dạng 24 giờ HH:MM, ví dụ 14:30.";
+  if (validity.badInput || validity.patternMismatch) return `${label} chưa hợp lệ.`;
+  return `${label} chưa hợp lệ.`;
+}
+
+function handleInvalid(event) {
+  const control = event.target;
+  if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) {
+    control.setCustomValidity(localizedValidationMessage(control));
+  }
+}
+function clearCustomValidity(event) {
+  const control = event.target;
+  if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) {
+    control.setCustomValidity("");
+  }
+}
+
 root.addEventListener("submit", handleSubmit);
 modalRoot.addEventListener("submit", handleSubmit);
+for (const container of [root, modalRoot]) {
+  container.addEventListener("invalid", handleInvalid, true);
+  container.addEventListener("input", clearCustomValidity, true);
+  container.addEventListener("change", clearCustomValidity, true);
+}
 root.addEventListener("click", async (event) => {
   const routeLink = event.target.closest("[data-route]");
   if (routeLink) { location.hash = `#${routeLink.dataset.route}`; return; }
@@ -766,7 +836,7 @@ async function boot() {
     await loadRoute();
   } catch (error) {
     api.logout();
-    showLogin(error.message);
+    showLogin(userErrorMessage(error));
   }
 }
 boot();
